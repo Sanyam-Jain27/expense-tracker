@@ -7,7 +7,7 @@ npm-shrinkwrap.json
 -nyc_output
 coverage
 
-# Benchmarking
+# Benchmarkinga
 benchmarks/graphs
 
 .env
