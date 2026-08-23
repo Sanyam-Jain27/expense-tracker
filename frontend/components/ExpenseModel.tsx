@@ -150,7 +150,7 @@ const ExpenseModel = ({
                 Category
               </label>
               <Select
-                onValueChange={(value) => setcategory(value)}
+                onValueChange={(value) => setcategory(value??"")}
                 value={category}
               >
                 <SelectTrigger className="w-full cursor-pointer">
