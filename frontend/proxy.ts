@@ -1,11 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Mark /login and /sign-up as public so users can view them
 const isPublicRoute = createRouteMatcher(["/login(.*)", "/sign-up(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
-    // Redirects unauthenticated users directly to your custom /login page
     await auth.protect();
   }
 });
