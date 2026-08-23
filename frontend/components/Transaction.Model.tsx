@@ -191,7 +191,7 @@ const TransactionModel = ({
 
             <div>
               <label className="text-sm font-medium">Category</label>
-              <Select onValueChange={(val) => setCategory(val)} value={category}>
+              <Select onValueChange={(val) => setCategory(val??"")} value={category}>
                 <SelectTrigger className="w-full cursor-pointer mt-1">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>

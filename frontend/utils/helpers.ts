@@ -343,7 +343,7 @@ const getPieChartOptions = (categorySeries: IPieData[]): Highcharts.Options => {
       padding: 0,
       formatter: function () {
         return `<div class="bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold py-1.5 px-3 rounded-xl shadow-lg border border-slate-700/50 flex items-center gap-2">
-          <span>${this.point.name}:</span>
+          <span>${this.key || this.name}:</span>
           <span class="text-indigo-300 font-bold">$${this.y?.toLocaleString()}</span>
         </div>`;
       },
