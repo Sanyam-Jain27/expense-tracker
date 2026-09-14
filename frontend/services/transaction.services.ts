@@ -9,10 +9,9 @@ const fetchAllTransactions = async (token: string) => {
         "Content-Type": "application/json",
       },
     });
-    console.log(response)
     return response?.data?.transaction || [];
   } catch (error) {
-    console.error("ye here is problem:", error);
+    console.error("Error fetching transactions:", error);
     throw error;
   }
 };

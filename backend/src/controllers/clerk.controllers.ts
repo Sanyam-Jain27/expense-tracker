@@ -39,50 +39,65 @@ const clerkWebhook = async (req: Request, res: Response) => {
         });
 
         switch (eventType) {
-
             case "user.created": {
-
                 if (!clerkId) {
                     return res.status(400).json({
                         message: "Clerk user ID is missing"
                     });
                 }
 
-                if (!fullName) {
-                    return res.status(400).json({
-                        message: "User name is missing"
-                    });
+                let existingUser = await User.findOne({ clerkId });
+                if (!existingUser && email) {
+                    existingUser = await User.findOne({ email });
                 }
 
-    //             // Check user using Clerk ID
-                const existingUser = await User.findOne({
-                    clerkId
-                });
-
                 if (existingUser) {
+                    existingUser.clerkId = clerkId;
+                    if (fullName) existingUser.fullname = fullName;
+                    if (imageUrl) existingUser.imageUrl = imageUrl;
+                    await existingUser.save();
                     return res.status(200).json({
-                        message: "User already exists"
+                        message: "User updated with Clerk ID"
                     });
                 }
 
                 const user = await User.create({
-                    fullname: fullName,
+                    clerkId,
+                    fullname: fullName || "User",
                     email: email || undefined,
-                    imageUrl: imageUrl || undefined
+                    imageUrl: imageUrl || undefined,
+                    expenses: [],
+                    incomes: []
                 });
 
-                console.log(
-                    "✅ MongoDB user created:",
-                    user._id
-                );
+                console.log("✅ MongoDB user created:", user._id);
+                return res.status(201).json({
+                    message: "User created successfully"
+                });
+            }
 
-    //             return res.status(200).json({
-    //                 message: "User created successfully"
-    //             });
+            case "user.updated": {
+                if (clerkId) {
+                    await User.findOneAndUpdate(
+                        { clerkId },
+                        {
+                            ...(fullName && { fullname: fullName }),
+                            ...(email && { email }),
+                            ...(imageUrl && { imageUrl }),
+                        }
+                    );
+                }
+                return res.status(200).json({ message: "User updated" });
+            }
+
+            case "user.deleted": {
+                if (clerkId) {
+                    await User.findOneAndDelete({ clerkId });
+                }
+                return res.status(200).json({ message: "User deleted" });
             }
 
             default:
-
                 return res.status(200).json({
                     message: `Event ${eventType} received`
                 });

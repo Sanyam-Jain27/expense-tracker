@@ -1,6 +1,12 @@
 import mongoose ,{Schema}from "mongoose";
 
 const userSchema = new mongoose.Schema({
+    clerkId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        index: true,
+    },
     fullname:{
         type:String,
         required:true,

@@ -1,45 +1,70 @@
-import { fetchIncome } from "@/services/income.services";
+import Highcharts from "highcharts";
 import {
   ITransactionData,
   ChartTypes,
   IChartSeriesPoint,
   IPieData,
 } from "./types";
-// import { fetchExpense } from "@/services/expense.services";
+
+export const formatCurrency = (amount: number | string | undefined): string => {
+  const num = Number(amount);
+  if (isNaN(num)) return "$0.00";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+};
+
+export const formatDate = (
+  dateValue: string | Date | null | undefined
+): string => {
+  if (!dateValue) return "";
+  const d = new Date(dateValue);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
 const fetchTransactionsList = (list: ITransactionData[]) => {
-  const chartData = list.map((t: ITransactionData) => {
-    return {
-      x: new Date(t.date || ""),
-      y: Number(t.amount),
-      type: t.transactionType,
-      icon: t.emoji,
-      category: t.category,
-    };
-  });
+  const chartData = list
+    .filter((t) => t.date && !isNaN(new Date(t.date).getTime()))
+    .map((t: ITransactionData) => {
+      return {
+        x: new Date(t.date || ""),
+        y: Number(t.amount) || 0,
+        type: t.transactionType,
+        icon: t.emoji || "💵",
+        category: t.category || "General",
+      };
+    });
 
   const sortedChartDataByDate = chartData.sort(
     (a, b) => a.x.getTime() - b.x.getTime()
   );
 
-  const newSeriesData = sortedChartDataByDate.map((point, index: number) => {
-    const { y, type, icon, category, x } = point || {};
-
-    return {
-      x: index,
-      y,
-      type,
-      icon,
-      tCategory: category,
-      rawDate: x,
-    };
-  });
+  const newSeriesData: IChartSeriesPoint[] = sortedChartDataByDate.map(
+    (point, index: number) => {
+      const { y, type, icon, category, x } = point;
+      return {
+        x: index,
+        y,
+        type,
+        icon,
+        tCategory: category,
+        rawDate: x,
+      };
+    }
+  );
 
   const newCategories = sortedChartDataByDate.map((p) =>
-    p.x.toLocaleDateString("en-IN", {
-      day: "2-digit",
+    p.x.toLocaleDateString("en-US", {
       month: "short",
-      year: "numeric",
+      day: "numeric",
     })
   );
 
@@ -55,146 +80,129 @@ const getChartOptions = (
   chartType: ChartTypes = "column"
 ): Highcharts.Options => {
   return {
-    title: {
-      text: "",
-    },
-    xAxis: {
-      type: "category",
-      categories,
-    },
-    credits: {
-      enabled: false,
-    },
     chart: {
-      height: 250,
+      type: chartType,
       backgroundColor: "transparent",
+      height: 280,
+      spacing: [10, 10, 15, 10],
     },
-    legend: {
-      enabled: false,
+    title: { text: "" },
+    credits: { enabled: false },
+    legend: { enabled: false },
+    xAxis: {
+      categories,
+      labels: {
+        style: { color: "#64748b", fontSize: "12px", fontWeight: "500" },
+      },
+      lineColor: "#e2e8f0",
+      tickColor: "#e2e8f0",
     },
     yAxis: {
-      title: {
-        text: "",
+      title: { text: "" },
+      labels: {
+        style: { color: "#64748b", fontSize: "12px", fontWeight: "500" },
+        formatter: function () {
+          return `$${this.value}`;
+        },
       },
+      gridLineColor: "#f1f5f9",
+      gridLineDashStyle: "Dash",
     },
     tooltip: {
       shape: "rect",
       useHTML: true,
       shadow: false,
-      backgroundColor: "white",
+      backgroundColor: "transparent",
+      borderWidth: 0,
+      padding: 0,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatter: function (this: any) {
         const point = this.point;
-
         const { type, icon, tCategory } = point;
-        const dataLabel = categories[this.x];
-        const textClass = type === "income" ? "text-green-500" : "text-red-500";
+        const dateLabel = categories[this.x] || "";
+        const isIncome = type === "income";
 
-        return `<div class="p-2 border shadow rounded-md flex flex-col items-center justify-start">
-            <div class="flex w-full justify-between">
-              <span class="text-sm">Date:</span>
-              <span class="font-medium text-sm">${dataLabel}</span>
-            </div>
-            <div class="flex items-center justify-between w-full gap-1">
-              <div class="flex justify-between items-center">
-                <span class="text-sm">Category:</span>
-              </div>
-              <span class="font-medium text-sm">${tCategory}</span>
+        return `<div style="background:#0f172a; color:#fff; padding:10px 14px; border-radius:12px; font-family:system-ui; box-shadow:0 10px 25px -5px rgba(0,0,0,0.2); min-width:140px;">
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:4px; font-weight:500;">${dateLabel}</div>
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span>${icon || "💵"}</span>
+            <span style="font-weight:600; font-size:13px;">${tCategory || "General"}</span>
           </div>
-            <div class="flex items-center justify-between w-full">
-              <div class="flex justify-between items-center">
-                <span class="text-sm">${icon}</span>
-                <span class="text-sm">${
-                  type === "income" ? "Income:" : "Expense:"
-                }</span>
-              </div>
-              <span class="font-medium ${textClass} text-sm">$${this.y}</span>
-          </div>          
-        </div>
-    `;
+          <div style="display:flex; align-items:center; justify-content:space-between; font-size:13px; font-weight:700; color:${isIncome ? "#34d399" : "#fb7185"};">
+            <span>${isIncome ? "+ Income" : "- Expense"}</span>
+            <span>$${Number(this.y).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          </div>
+        </div>`;
       },
     },
     plotOptions: {
       column: {
         borderRadius: 8,
+        borderWidth: 0,
+        color: "#6366f1",
+      },
+      line: {
+        color: "#6366f1",
+        lineWidth: 3,
+        marker: {
+          radius: 4,
+          fillColor: "#ffffff",
+          lineWidth: 2,
+          lineColor: "#6366f1",
+        },
       },
     },
     series: [
       {
         type: chartType,
         data: seriesData,
-        color: "#8271fe",
+        color: "#6366f1",
       },
     ],
   };
 };
 
-// const getDashboardValues = async (token: string) => {
-//   const incomeList = await fetchIncome(token);
-//   const expenseList = await fetchExpense(token);
-
-//   let incomeValue = 0;
-//   let expenseValue = 0;
-
-//   incomeList.forEach((income: ITransactionData) => {
-//     incomeValue += Number(income.amount);
-//   });
-
-//   expenseList.forEach((expense: ITransactionData) => {
-//     expenseValue += Number(expense.amount);
-//   });
-
-//   const totalBalance = incomeValue - expenseValue;
-//   const totalTransaction = incomeValue + expenseValue;
-
-//   return { incomeValue, expenseValue, totalBalance, totalTransaction };
-// };
-
 const getMonthlyIncomeExpense = async (
   incomeList: ITransactionData[],
   expenseList: ITransactionData[]
 ) => {
-  const formatMonth = (itemDate: Date) => {
-    const date = new Date(itemDate);
+  interface IMonthSummary {
+    label: string;
+    income: number;
+    expense: number;
+  }
 
-    return date.toLocaleString("default", {
-      month: "short",
-      year: "numeric",
-    });
+  const monthMap: Record<string, IMonthSummary> = {};
+
+  const processItem = (item: ITransactionData, type: "income" | "expense") => {
+    if (!item.date) return;
+    const d = new Date(item.date);
+    if (isNaN(d.getTime())) return;
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const key = `${year}-${month}`;
+    const label = d.toLocaleString("default", { month: "short", year: "numeric" });
+
+    if (!monthMap[key]) {
+      monthMap[key] = { label, income: 0, expense: 0 };
+    }
+
+    if (type === "income") {
+      monthMap[key].income += Number(item.amount) || 0;
+    } else {
+      monthMap[key].expense += Number(item.amount) || 0;
+    }
   };
 
-  const monthMap: Record<string, { income: number; expense: number }> = {};
+  incomeList.forEach((t) => processItem(t, "income"));
+  expenseList.forEach((t) => processItem(t, "expense"));
 
-  incomeList.forEach((item) => {
-    if (item.date) {
-      const month = formatMonth(item.date);
-      if (!monthMap[month]) {
-        monthMap[month] = { income: 0, expense: 0 };
-      }
-
-      monthMap[month].income += Number(item.amount);
-    }
-  });
-
-  expenseList.forEach((item) => {
-    if (item.date) {
-      const month = formatMonth(item.date);
-      if (!monthMap[month]) {
-        monthMap[month] = { income: 0, expense: 0 };
-      }
-
-      monthMap[month].expense += Number(item.amount);
-    }
-  });
-
-  const categories = Object.keys(monthMap).sort((a, b) => {
-    const da = new Date(a);
-    const db = new Date(b);
-    return da.getTime() - db.getTime();
-  });
-
-  const incomeSeries = categories.map((m) => monthMap[m].income);
-  const expenseSeries = categories.map((m) => monthMap[m].expense);
+  // Sort chronologically by YYYY-MM key
+  const sortedKeys = Object.keys(monthMap).sort();
+  const categories = sortedKeys.map((k) => monthMap[k].label);
+  const incomeSeries = sortedKeys.map((k) => monthMap[k].income);
+  const expenseSeries = sortedKeys.map((k) => monthMap[k].expense);
 
   return { incomeSeries, expenseSeries, categories };
 };
@@ -208,92 +216,98 @@ const getMoneyFlowOptions = (
     chart: {
       type: "column",
       backgroundColor: "transparent",
-      marginTop: 70,   // was 60
+      height: 320,
+      marginTop: 50,
+      spacing: [10, 10, 15, 10],
     },
-    title: {
-      text: "",
-    },
+    title: { text: "" },
     legend: {
       align: "right",
       verticalAlign: "top",
       layout: "horizontal",
       symbolRadius: 6,
-      symbolHeight: 10,
-      symbolWidth: 10,
+      symbolHeight: 8,
+      symbolWidth: 8,
       itemStyle: {
-        fontSize: "14px",
-        fontWeight: "500",
-        color: "#334155",   // add this
+        fontSize: "12px",
+        fontWeight: "600",
+        color: "#475569",
       },
-      y: -6,
+      y: -10,
     },
-
     xAxis: {
       categories,
-      title: {
-        text: "",
-      },
       labels: {
-        style: { fontSize: "12px", fontWeight: "500", color: "#6a7282" },
+        style: { fontSize: "12px", fontWeight: "500", color: "#64748b" },
       },
+      lineColor: "#e2e8f0",
+      tickColor: "#e2e8f0",
     },
     yAxis: {
-      title: {
-        text: "",
-      },
+      title: { text: "" },
       labels: {
-        style: { fontSize: "12px", fontWeight: "500", color: "#6a7282" },
+        style: { fontSize: "12px", fontWeight: "500", color: "#64748b" },
         formatter: function () {
-          return `$${this.value}`;
+          return `$${Number(this.value).toLocaleString()}`;
         },
       },
-      gridLineColor: "#e0e0e0",
+      gridLineColor: "#f1f5f9",
+      gridLineDashStyle: "Dash",
     },
     tooltip: {
       shape: "rect",
       useHTML: true,
       shadow: false,
       backgroundColor: "transparent",
+      borderWidth: 0,
+      padding: 0,
       formatter: function () {
-        return `<div class="bg-white py-1 px-4 text-base font-medium border border-gray-300 rounded-3xl">$${this.y}</div>`;
+        const isIncome = this.series.name === "Income";
+        return `<div style="background:#0f172a; color:#fff; padding:8px 12px; border-radius:10px; font-family:system-ui; box-shadow:0 10px 25px -5px rgba(0,0,0,0.2);">
+          <div style="font-size:11px; color:#94a3b8; margin-bottom:2px;">${this.key} • ${this.series.name}</div>
+          <div style="font-size:14px; font-weight:700; color:${isIncome ? "#34d399" : "#fb7185"};">
+            $${Number(this.y).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </div>
+        </div>`;
       },
     },
     plotOptions: {
       column: {
         grouping: true,
         borderWidth: 0,
-        pointWidth: 40,
-        borderRadius: 20,
-        groupPadding: 0.1,
-        states: {
-          hover: {
-            enabled: false,
-          },
-          inactive: {
-            enabled: false,
-          },
-        },
+        borderRadius: 8,
+        pointPadding: 0.1,
+        groupPadding: 0.2,
       },
     },
-    credits: {
-      enabled: false,
-    },
+    credits: { enabled: false },
     series: [
       {
         name: "Income",
         type: "column",
         data: incomeSeries,
-        color: "#8271fe",
+        color: "#10b981", // modern emerald
       },
       {
         name: "Expense",
         type: "column",
         data: expenseSeries,
-        color: "#c0b9fa",
+        color: "#f43f5e", // modern rose
       },
     ],
   };
 };
+
+const MODERN_PIE_PALETTE = [
+  "#6366f1", // indigo
+  "#ec4899", // pink
+  "#f59e0b", // amber
+  "#10b981", // emerald
+  "#3b82f6", // blue
+  "#8b5cf6", // purple
+  "#14b8a6", // teal
+  "#f97316", // orange
+];
 
 const getPieChartOptions = (categorySeries: IPieData[]): Highcharts.Options => {
   let totalValue = 0;
@@ -305,34 +319,28 @@ const getPieChartOptions = (categorySeries: IPieData[]): Highcharts.Options => {
     chart: {
       type: "pie",
       backgroundColor: "transparent",
-      height: 380,
+      height: 320,
     },
-    credits: {
-      enabled: false,
-    },
+    colors: MODERN_PIE_PALETTE,
+    credits: { enabled: false },
     title: {
       useHTML: true,
       text: `<div style="text-align: center; pointer-events: none;">
-        <div style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total Amount</div>
-        <div style="font-size: 18px; color: #1e293b; font-weight: 700; margin-top: 2px;">$${totalValue.toLocaleString()}</div>
+        <div style="font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total</div>
+        <div style="font-size: 17px; color: #0f172a; font-weight: 700; margin-top: 2px;">$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
       </div>`,
       align: "center",
       verticalAlign: "middle",
-      y: -65,
-    },
-    subtitle: {
-      text: "",
+      y: -30,
     },
     legend: {
       layout: "horizontal",
       align: "center",
       verticalAlign: "bottom",
-      floating: false,
-      itemWidth: 140,
       itemStyle: {
-        fontSize: "13px",
+        fontSize: "12px",
         fontWeight: "500",
-        color: "#334155",
+        color: "#475569",
       },
     },
     tooltip: {
@@ -342,33 +350,25 @@ const getPieChartOptions = (categorySeries: IPieData[]): Highcharts.Options => {
       backgroundColor: "none",
       padding: 0,
       formatter: function () {
-        return `<div class="bg-slate-900/90 backdrop-blur-md text-white text-xs font-semibold py-1.5 px-3 rounded-xl shadow-lg border border-slate-700/50 flex items-center gap-2">
-          <span>${this.key || this.name}:</span>
-          <span class="text-indigo-300 font-bold">$${this.y?.toLocaleString()}</span>
+        const percent = totalValue > 0 ? (((this.y || 0) / totalValue) * 100).toFixed(1) : "0";
+        return `<div style="background:#0f172a; color:#fff; padding:8px 12px; border-radius:10px; font-family:system-ui; box-shadow:0 10px 25px -5px rgba(0,0,0,0.2);">
+          <div style="font-size:12px; font-weight:600;">${this.key || this.name}</div>
+          <div style="font-size:13px; font-weight:700; color:#818cf8; margin-top:2px;">
+            $${Number(this.y).toLocaleString()} <span style="font-size:11px; color:#94a3b8; font-weight:500;">(${percent}%)</span>
+          </div>
         </div>`;
       },
     },
     plotOptions: {
       pie: {
-        innerSize: "78%",
-        size: "65%",
-        center: ["50%", "35%"],
-        borderWidth: 4,
+        innerSize: "72%",
+        size: "70%",
+        center: ["50%", "45%"],
+        borderWidth: 2,
         borderColor: "#ffffff",
-        borderRadius: 20,
+        borderRadius: 6,
         dataLabels: { enabled: false },
         showInLegend: true,
-        states: {
-          hover: {
-            enabled: true,
-            halo: {
-              size: 6, // Adds a subtle outer ring highlight on hover instead of popping out
-            },
-          },
-          inactive: {
-            opacity: 0.65, // Softly dims non-hovered slices
-          },
-        },
       },
     },
     series: [
@@ -384,25 +384,21 @@ const getCategoryWiseValue = (transactions: ITransactionData[]) => {
   const categoryMap: Record<string, number> = {};
 
   transactions.forEach((tr) => {
-    if (!categoryMap[tr.category]) {
-      categoryMap[tr.category] = 0;
+    const cat = tr.category || "Other";
+    if (!categoryMap[cat]) {
+      categoryMap[cat] = 0;
     }
-
-    categoryMap[tr.category] += Number(tr.amount);
+    categoryMap[cat] += Number(tr.amount) || 0;
   });
 
-  const category = Object.entries(categoryMap).map(([name, y]) => ({
-    name,
-    y,
-  }));
-
-  return category;
+  return Object.entries(categoryMap)
+    .map(([name, y]) => ({ name, y }))
+    .sort((a, b) => b.y - a.y);
 };
 
 export {
   getChartOptions,
   fetchTransactionsList,
-  // getDashboardValues,
   getMonthlyIncomeExpense,
   getMoneyFlowOptions,
   getPieChartOptions,

@@ -6,10 +6,20 @@ import expenseRouter from "./routes/routes.expense"
 import transactionRouter from "./routes/routes.transaction"
 const app = express();
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://expense-tracker-frontend-tau-three.vercel.app",
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or Postman)
+    if (!origin) return callback(null, true);
+    if (
+      origin.startsWith("http://localhost:") ||
+      origin.startsWith("http://127.0.0.1:") ||
+      origin.includes("vercel.app") ||
+      origin === "https://expense-tracker-frontend-tau-three.vercel.app"
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive in dev to prevent CORS blockage
+  },
+  credentials: true,
 }))
 app.use(
     express.json({

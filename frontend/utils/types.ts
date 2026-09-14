@@ -20,6 +20,8 @@ export type ITransactionData = {
   date: Date | null;
   transactionType?: string;
   _id?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 };
 
 export type ChartPoint = {
