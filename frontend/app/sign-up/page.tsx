@@ -1,9 +1,14 @@
 import { SignUp } from "@clerk/nextjs";
-const SignUpPage = () => {
+import AuthLayout, { clerkAppearance } from "@/components/auth/AuthLayout";
+
+export default function SignUpPage() {
   return (
-    <div className="flex items-center justify-center h-full w-full">
-      <SignUp routing="hash" signInUrl="/login" />
-    </div>
+    <AuthLayout subtitle="Create your free account today and start tracking your expenses, cashflow, and savings in minutes.">
+      <SignUp
+        routing="hash"
+        signInUrl="/login"
+        appearance={clerkAppearance}
+      />
+    </AuthLayout>
   );
-};
-export default SignUpPage;
+}

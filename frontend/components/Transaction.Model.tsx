@@ -11,8 +11,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/model";
-import EmojiPicker from "emoji-picker-react";
-import { IEmojiObject } from "@/lib/types";
+import DynamicEmojiPicker from "./shared/DynamicEmojiPicker";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -63,7 +62,6 @@ const TransactionModel = ({
   const [transactionType, setTransactionType] = useState<"income" | "expense">(
     "income"
   );
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectEmoji, setSelectEmoji] = useState("💵");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -85,11 +83,6 @@ const TransactionModel = ({
       handleResetForm();
     }
   }, [transactionObj, isEditMode]);
-
-  const handleEmojiSelect = (emojiObj: IEmojiObject) => {
-    setSelectEmoji(emojiObj.emoji);
-    setShowEmojiPicker(false);
-  };
 
   const handleResetForm = () => {
     setSelectEmoji("💵");
@@ -212,21 +205,11 @@ const TransactionModel = ({
               Icon & Title
             </label>
             <div className="flex gap-2.5 items-center">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="w-11 h-10 flex items-center justify-center text-2xl border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Choose icon"
-                >
-                  {selectEmoji}
-                </button>
-                {showEmojiPicker && (
-                  <div className="absolute top-12 left-0 z-50 shadow-2xl rounded-xl">
-                    <EmojiPicker onEmojiClick={handleEmojiSelect} />
-                  </div>
-                )}
-              </div>
+              <DynamicEmojiPicker
+                value={selectEmoji}
+                onChange={setSelectEmoji}
+                title="Choose transaction icon"
+              />
 
               <div className="flex-1">
                 <Input

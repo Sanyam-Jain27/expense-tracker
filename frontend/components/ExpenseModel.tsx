@@ -11,8 +11,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/model";
-import EmojiPicker from "emoji-picker-react";
-import { IEmojiObject } from "@/lib/types";
+import DynamicEmojiPicker from "./shared/DynamicEmojiPicker";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -51,7 +50,6 @@ const ExpenseModel = ({
   isEditMode,
   setIsEditMode,
 }: ExpenseModelProps) => {
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectEmoji, setSelectEmoji] = useState("💸");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -70,11 +68,6 @@ const ExpenseModel = ({
       handleResetForm();
     }
   }, [expenseObj, isEditMode]);
-
-  const handleEmojiSelect = (emojiObj: IEmojiObject) => {
-    setSelectEmoji(emojiObj.emoji);
-    setShowEmojiPicker(false);
-  };
 
   const handleResetForm = () => {
     setSelectEmoji("💸");
@@ -159,21 +152,11 @@ const ExpenseModel = ({
               Icon & Title
             </label>
             <div className="flex gap-2.5 items-center">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="w-11 h-10 flex items-center justify-center text-2xl border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Choose icon"
-                >
-                  {selectEmoji}
-                </button>
-                {showEmojiPicker && (
-                  <div className="absolute top-12 left-0 z-50 shadow-2xl rounded-xl">
-                    <EmojiPicker onEmojiClick={handleEmojiSelect} />
-                  </div>
-                )}
-              </div>
+              <DynamicEmojiPicker
+                value={selectEmoji}
+                onChange={setSelectEmoji}
+                title="Choose expense icon"
+              />
 
               <div className="flex-1">
                 <Input
@@ -191,10 +174,7 @@ const ExpenseModel = ({
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
               Expense Category
             </label>
-            <Select
-              onValueChange={(val) => setCategory(val ?? "")}
-              value={category}
-            >
+            <Select onValueChange={(val) => setCategory(val ?? "")} value={category}>
               <SelectTrigger className="w-full h-10 rounded-xl bg-slate-50 border-slate-200 focus:bg-white text-sm cursor-pointer">
                 <SelectValue placeholder="Select expense category" />
               </SelectTrigger>
@@ -245,10 +225,7 @@ const ExpenseModel = ({
                   </span>
                   <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
                 </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0 bg-white border border-slate-200 shadow-2xl rounded-2xl"
-                  align="start"
-                >
+                <PopoverContent className="w-auto p-0 bg-white border border-slate-200 shadow-2xl rounded-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={date ?? undefined}
@@ -264,11 +241,7 @@ const ExpenseModel = ({
 
           <DialogFooter className="pt-3 border-t border-slate-100 flex gap-2">
             <DialogClose>
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-xl cursor-pointer"
-              >
+              <Button type="button" variant="outline" className="rounded-xl cursor-pointer">
                 Cancel
               </Button>
             </DialogClose>
