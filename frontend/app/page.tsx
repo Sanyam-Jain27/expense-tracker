@@ -1,8 +1,5 @@
-import Dashboard from "@/components/Dashboard";
-import { withAuth } from "@/hoc/withAuth";
+import LandingPage from "@/components/landing/LandingPage";
 
-const App = () => {
-  return <Dashboard />;
-};
-
-export default withAuth(App);
+export default function HomePage() {
+  return <LandingPage />;
+}

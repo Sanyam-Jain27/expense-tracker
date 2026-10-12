@@ -4,7 +4,7 @@ export const APP_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 const SIDEBAR_CONSTANTS = [
   {
-    id: "/",
+    id: "/dashboard",
     title: "Dashboard",
     icon: Home,
   },

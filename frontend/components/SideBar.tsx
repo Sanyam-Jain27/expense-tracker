@@ -13,7 +13,7 @@ const SideBar = () => {
   const { user } = useUser();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  if (pathname === "/login" || pathname === "/sign-up") {
+  if (pathname === "/" || pathname === "/login" || pathname === "/sign-up") {
     return null;
   }
 
